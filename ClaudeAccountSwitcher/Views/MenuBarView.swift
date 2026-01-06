@@ -414,11 +414,21 @@ struct AccountSwitchRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(account.name)
                         .font(.body)
-                    if let rateLimit = account.cachedRateLimit,
-                       let remaining = rateLimit.sessionRemaining {
-                        Text("\(remaining)% left")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    if let rateLimit = account.cachedRateLimit {
+                        HStack(spacing: 8) {
+                            if let sessionUsed = rateLimit.sessionUsed {
+                                let sessionLeft = max(0, 100 - sessionUsed)
+                                Text("Session: \(sessionLeft)%")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let weeklyUsed = rateLimit.weeklyUsed {
+                                let weeklyLeft = max(0, 100 - weeklyUsed)
+                                Text("Weekly: \(weeklyLeft)%")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
                 }
                 Spacer()
@@ -574,10 +584,10 @@ struct MenuActionButton: View {
     }
 }
 
-// MARK: - Icon Renderer
+// MARK: - Icon Renderer (matches CodexBar exactly)
 
-/// Renders menu bar icons similar to CodexBar's style
 enum IconRenderer {
+    // Render to an 18×18 pt template (36×36 px at 2×) to match the system menu bar size.
     private static let outputSize = NSSize(width: 18, height: 18)
     private static let outputScale: CGFloat = 2
     private static let canvasPx = Int(outputSize.width * outputScale) // 36px
@@ -610,33 +620,39 @@ enum IconRenderer {
         }
     }
 
-    /// Creates a menu bar icon showing session and weekly usage
+    /// Creates a menu bar icon showing session and weekly usage (Claude style)
     static func makeIcon(
         sessionRemaining: Double?,
         weeklyRemaining: Double?,
         stale: Bool = false
     ) -> NSImage {
         renderImage {
+            // Keep monochrome template icons; Claude uses subtle shape cues only.
             let baseFill = NSColor.labelColor
             let trackFillAlpha: CGFloat = stale ? 0.18 : 0.28
             let trackStrokeAlpha: CGFloat = stale ? 0.28 : 0.44
             let fillColor = baseFill.withAlphaComponent(stale ? 0.55 : 1.0)
 
-            let barWidthPx = 30 // 15 pt at 2×
-            let barXPx = (canvasPx - barWidthPx) / 2
+            let barWidthPx = 30 // 15 pt at 2×, uses the slot better without touching edges.
+            let barXPx = (canvasPx - barWidthPx) / 2 // = 3
 
-            func drawBar(rectPx: RectPx, remaining: Double?, alpha: CGFloat = 1.0, addClaudeStyle: Bool = false) {
+            func drawBar(
+                rectPx: RectPx,
+                remaining: Double?,
+                alpha: CGFloat = 1.0,
+                addNotches: Bool = false
+            ) {
                 let rect = rectPx.rect()
-                let cornerRadiusPx = addClaudeStyle ? 0 : rectPx.h / 2
+                // Claude reads better as a blockier critter; uses sharp corners.
+                let cornerRadiusPx = addNotches ? 0 : rectPx.h / 2
                 let radius = grid.pt(cornerRadiusPx)
 
-                // Track background
                 let trackPath = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
                 baseFill.withAlphaComponent(trackFillAlpha * alpha).setFill()
                 trackPath.fill()
 
-                // Stroke outline
-                let strokeWidthPx = 2
+                // Crisp outline: stroke an inset path so the stroke stays within pixel bounds.
+                let strokeWidthPx = 2 // 1 pt == 2 px at 2×
                 let insetPx = strokeWidthPx / 2
                 let strokeRect = grid.rect(
                     x: rectPx.x + insetPx,
@@ -651,7 +667,7 @@ enum IconRenderer {
                 baseFill.withAlphaComponent(trackStrokeAlpha * alpha).setStroke()
                 strokePath.stroke()
 
-                // Fill based on remaining percentage
+                // Fill: clip to the capsule and paint a left-to-right rect so the progress edge is straight.
                 if let remaining {
                     let clamped = max(0, min(remaining / 100, 1))
                     let fillWidthPx = max(0, min(rectPx.w, Int((CGFloat(rectPx.w) * CGFloat(clamped)).rounded())))
@@ -669,21 +685,31 @@ enum IconRenderer {
                     }
                 }
 
-                // Claude-style critter decorations
-                if addClaudeStyle {
+                // Claude twist: blocky crab-style critter (arms + legs + vertical eyes).
+                if addNotches {
                     let ctx = NSGraphicsContext.current?.cgContext
+
                     fillColor.withAlphaComponent(alpha).setFill()
 
-                    // Arms/claws
+                    // Arms/claws: mid-height side protrusions.
+                    // Keep within the 18×18pt canvas: barX is 3px, so 3px arms reach the edge without clipping.
                     let armWidthPx = 3
                     let armHeightPx = max(0, rectPx.h - 6)
                     let armYPx = rectPx.y + 3
-                    let leftArm = grid.rect(x: rectPx.x - armWidthPx, y: armYPx, w: armWidthPx, h: armHeightPx)
-                    let rightArm = grid.rect(x: rectPx.x + rectPx.w, y: armYPx, w: armWidthPx, h: armHeightPx)
+                    let leftArm = grid.rect(
+                        x: rectPx.x - armWidthPx,
+                        y: armYPx,
+                        w: armWidthPx,
+                        h: armHeightPx)
+                    let rightArm = grid.rect(
+                        x: rectPx.x + rectPx.w,
+                        y: armYPx,
+                        w: armWidthPx,
+                        h: armHeightPx)
                     NSBezierPath(rect: leftArm).fill()
                     NSBezierPath(rect: rightArm).fill()
 
-                    // Legs
+                    // Legs: 4 little pixels underneath, like a tiny crab.
                     let legCount = 4
                     let legWidthPx = 2
                     let legHeightPx = 3
@@ -691,11 +717,15 @@ enum IconRenderer {
                     let stepPx = max(1, rectPx.w / (legCount + 1))
                     for idx in 0..<legCount {
                         let cx = rectPx.x + stepPx * (idx + 1)
-                        let leg = grid.rect(x: cx - legWidthPx / 2, y: legYPx, w: legWidthPx, h: legHeightPx)
+                        let leg = grid.rect(
+                            x: cx - legWidthPx / 2,
+                            y: legYPx,
+                            w: legWidthPx,
+                            h: legHeightPx)
                         NSBezierPath(rect: leg).fill()
                     }
 
-                    // Eyes
+                    // Eyes: tall vertical cutouts near the top.
                     let eyeWidthPx = 2
                     let eyeHeightPx = 5
                     let eyeOffsetPx = 6
@@ -716,17 +746,29 @@ enum IconRenderer {
                 }
             }
 
+            let topValue = sessionRemaining
+            let bottomValue = weeklyRemaining
+
+            let hasWeekly = (weeklyRemaining != nil)
+            let weeklyAvailable = hasWeekly && (weeklyRemaining ?? 0) > 0
+            
             // Top bar (session) - larger, with Claude style
             let topRectPx = RectPx(x: barXPx, y: 19, w: barWidthPx, h: 12)
-            // Bottom bar (weekly) - smaller
+            // Bottom bar (weekly) - smaller, rounded
             let bottomRectPx = RectPx(x: barXPx, y: 5, w: barWidthPx, h: 8)
 
-            drawBar(rectPx: topRectPx, remaining: sessionRemaining, addClaudeStyle: true)
-
-            if weeklyRemaining != nil {
-                drawBar(rectPx: bottomRectPx, remaining: weeklyRemaining)
-            } else {
+            if weeklyAvailable {
+                // Normal: top=session, bottom=weekly
+                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: true)
+                drawBar(rectPx: bottomRectPx, remaining: bottomValue)
+            } else if !hasWeekly {
+                // Weekly missing (e.g. enterprise): keep normal layout but dim the bottom track
+                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: true)
                 drawBar(rectPx: bottomRectPx, remaining: nil, alpha: 0.45)
+            } else {
+                // Weekly exhausted/zero
+                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: true)
+                drawBar(rectPx: bottomRectPx, remaining: bottomValue)
             }
         }
     }

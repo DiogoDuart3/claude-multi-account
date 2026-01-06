@@ -1,6 +1,15 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Limit State Tracking
+
+struct LimitState: Equatable {
+    var sessionHitLimit: Bool = false
+    var weeklyHitLimit: Bool = false
+    var sessionResetTime: Date?
+    var weeklyResetTime: Date?
+}
+
 @MainActor
 class AccountSwitcher: ObservableObject {
     @Published var accounts: [Account] = []
@@ -12,6 +21,13 @@ class AccountSwitcher: ObservableObject {
     private let keychainManager = KeychainManager.shared
     private let configManager = ConfigFileManager.shared
     private let usageParser = UsageParser.shared
+    private let notificationManager = NotificationManager.shared
+    
+    // Track previous limit states per account
+    private var previousLimitStates: [UUID: LimitState] = [:]
+    
+    // Threshold for considering limit "hit" (percentage used)
+    private let limitHitThreshold: Int = 100
 
     init() {
         loadAccounts()
@@ -39,6 +55,44 @@ class AccountSwitcher: ObservableObject {
         // Mark the active one
         for i in accounts.indices {
             accounts[i].isActive = accounts[i].id == activeAccount?.id
+        }
+        
+        // Initialize previous limit states from cached data to avoid false notifications
+        initializeLimitStates()
+    }
+    
+    private func initializeLimitStates() {
+        for account in accounts {
+            guard let rateLimit = account.cachedRateLimit else { continue }
+            
+            var state = LimitState()
+            
+            if let sessionUsed = rateLimit.sessionUsed {
+                state.sessionHitLimit = sessionUsed >= limitHitThreshold
+                state.sessionResetTime = rateLimit.resetTime
+            }
+            
+            if let weeklyUsed = rateLimit.weeklyUsed {
+                state.weeklyHitLimit = weeklyUsed >= limitHitThreshold
+                state.weeklyResetTime = rateLimit.weeklyResetTime
+            }
+            
+            previousLimitStates[account.id] = state
+            
+            // Schedule reset notifications for limits that are currently hit
+            if state.sessionHitLimit, let resetTime = rateLimit.resetTime {
+                notificationManager.scheduleSessionResetNotification(
+                    accountName: account.name,
+                    resetTime: resetTime
+                )
+            }
+            
+            if state.weeklyHitLimit, let resetTime = rateLimit.weeklyResetTime {
+                notificationManager.scheduleWeeklyResetNotification(
+                    accountName: account.name,
+                    resetTime: resetTime
+                )
+            }
         }
     }
 
@@ -131,13 +185,112 @@ class AccountSwitcher: ObservableObject {
         // Get rate limit info from CLI
         do {
             let rateLimitInfo = try await usageParser.fetchUsage()
+            
+            // Store old rate limit for comparison
+            let oldRateLimit = accounts[index].cachedRateLimit
+            
             accounts[index].cachedRateLimit = rateLimitInfo
             activeAccount = accounts[index]
             saveAccounts()
+            
+            // Check for limit state changes and send notifications
+            checkAndNotifyLimitChanges(
+                account: accounts[index],
+                oldRateLimit: oldRateLimit,
+                newRateLimit: rateLimitInfo
+            )
         } catch {
             // Rate limit fetch failed, but we still have local stats
             print("Failed to fetch rate limit info: \(error)")
         }
+    }
+    
+    // MARK: - Limit Change Detection & Notifications
+    
+    private func checkAndNotifyLimitChanges(
+        account: Account,
+        oldRateLimit: RateLimitInfo?,
+        newRateLimit: RateLimitInfo
+    ) {
+        let previousState = previousLimitStates[account.id] ?? LimitState()
+        var currentState = LimitState()
+        
+        // Determine current limit states
+        if let sessionUsed = newRateLimit.sessionUsed {
+            currentState.sessionHitLimit = sessionUsed >= limitHitThreshold
+            currentState.sessionResetTime = newRateLimit.resetTime
+        }
+        
+        if let weeklyUsed = newRateLimit.weeklyUsed {
+            currentState.weeklyHitLimit = weeklyUsed >= limitHitThreshold
+            currentState.weeklyResetTime = newRateLimit.weeklyResetTime
+        }
+        
+        // Check for session limit hit
+        if currentState.sessionHitLimit && !previousState.sessionHitLimit {
+            notificationManager.notifySessionLimitHit(
+                accountName: account.name,
+                resetTime: newRateLimit.resetTime
+            )
+            
+            // Schedule notification for when limit resets
+            if let resetTime = newRateLimit.resetTime {
+                notificationManager.scheduleSessionResetNotification(
+                    accountName: account.name,
+                    resetTime: resetTime
+                )
+            }
+        }
+        
+        // Check for session limit reset (was hit, now not hit)
+        if !currentState.sessionHitLimit && previousState.sessionHitLimit {
+            notificationManager.notifySessionLimitReset(accountName: account.name)
+            // Cancel any pending reset notifications
+            notificationManager.cancelScheduledNotifications(for: account.name)
+        }
+        
+        // Check for weekly limit hit
+        if currentState.weeklyHitLimit && !previousState.weeklyHitLimit {
+            notificationManager.notifyWeeklyLimitHit(
+                accountName: account.name,
+                resetTime: newRateLimit.weeklyResetTime
+            )
+            
+            // Schedule notification for when limit resets
+            if let resetTime = newRateLimit.weeklyResetTime {
+                notificationManager.scheduleWeeklyResetNotification(
+                    accountName: account.name,
+                    resetTime: resetTime
+                )
+            }
+        }
+        
+        // Check for weekly limit reset (was hit, now not hit)
+        if !currentState.weeklyHitLimit && previousState.weeklyHitLimit {
+            notificationManager.notifyWeeklyLimitReset(accountName: account.name)
+        }
+        
+        // Update limit reset time schedules if they changed
+        if currentState.sessionHitLimit,
+           let newResetTime = currentState.sessionResetTime,
+           previousState.sessionResetTime != newResetTime {
+            notificationManager.scheduleSessionResetNotification(
+                accountName: account.name,
+                resetTime: newResetTime
+            )
+        }
+        
+        if currentState.weeklyHitLimit,
+           let newResetTime = currentState.weeklyResetTime,
+           previousState.weeklyResetTime != newResetTime {
+            notificationManager.scheduleWeeklyResetNotification(
+                accountName: account.name,
+                resetTime: newResetTime
+            )
+        }
+        
+        // Save current state for next comparison
+        previousLimitStates[account.id] = currentState
     }
 
     func refreshAllAccounts() async {
@@ -229,19 +382,35 @@ class AccountSwitcher: ObservableObject {
         // Poll every 2 seconds for up to 5 minutes
         let maxAttempts = 150
         var attempts = 0
+        
+        // Track when we started polling to detect new credentials
+        let credentialsPath = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude/.credentials.json")
+        let initialModDate = (try? FileManager.default.attributesOfItem(atPath: credentialsPath.path))?[.modificationDate] as? Date
 
         while attempts < maxAttempts {
             try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
             attempts += 1
 
-            let credentials = keychainManager.listAllClaudeCredentials()
-            if !credentials.isEmpty {
+            // Check if credentials file was modified (new login)
+            let currentModDate = (try? FileManager.default.attributesOfItem(atPath: credentialsPath.path))?[.modificationDate] as? Date
+            
+            let hasNewCredentials: Bool
+            if let initial = initialModDate, let current = currentModDate {
+                hasNewCredentials = current > initial
+            } else if initialModDate == nil && currentModDate != nil {
+                // File was created
+                hasNewCredentials = true
+            } else {
+                // Also check old keychain credentials as fallback
+                hasNewCredentials = !keychainManager.listAllClaudeCredentials().isEmpty
+            }
+            
+            if hasNewCredentials {
                 // Found new credentials!
-                let (_, username) = credentials[0]
-
                 await MainActor.run {
                     if let index = accounts.firstIndex(where: { $0.id == accountId }) {
-                        accounts[index].username = username
+                        accounts[index].username = "authenticated"
                         accounts[index].cachedUsage = configManager.readUsageStats()
 
                         // Backup the new account
@@ -254,8 +423,13 @@ class AccountSwitcher: ObservableObject {
                     isAddingAccount = false
                 }
 
-                // Refresh usage
+                // Refresh usage - this will use the OAuth API
                 await refreshUsage()
+                
+                // Save again after refresh to persist the usage data
+                await MainActor.run {
+                    saveAccounts()
+                }
                 return
             }
         }

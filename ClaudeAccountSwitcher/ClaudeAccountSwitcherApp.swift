@@ -17,28 +17,27 @@ struct ClaudeAccountSwitcherApp: App {
     private var menuBarIcon: NSImage {
         if let active = switcher.activeAccount,
            let rateLimit = active.cachedRateLimit {
-            // Get session remaining percentage
+            // sessionUsed and weeklyUsed are already percentages (0-100)
+            // So remaining = 100 - used
             let sessionRemaining: Double?
-            if let remaining = rateLimit.sessionRemaining {
-                sessionRemaining = Double(remaining)
-            } else if let used = rateLimit.sessionUsed {
-                sessionRemaining = 100 - Double(used)
+            if let used = rateLimit.sessionUsed {
+                sessionRemaining = Double(100 - used)
             } else {
                 sessionRemaining = nil
             }
 
-            // Get weekly remaining percentage
             let weeklyRemaining: Double?
-            if let remaining = rateLimit.weeklyRemaining {
-                weeklyRemaining = Double(remaining)
-            } else if let used = rateLimit.weeklyUsed {
-                weeklyRemaining = 100 - Double(used)
+            if let used = rateLimit.weeklyUsed {
+                weeklyRemaining = Double(100 - used)
             } else {
                 weeklyRemaining = nil
             }
 
             // Check if data is stale (older than 10 minutes)
             let isStale = Date().timeIntervalSince(rateLimit.lastUpdated) > 600
+
+            // Debug output
+            print("Icon: session=\(sessionRemaining ?? -1), weekly=\(weeklyRemaining ?? -1), stale=\(isStale)")
 
             return IconRenderer.makeIcon(
                 sessionRemaining: sessionRemaining,

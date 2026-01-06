@@ -16,6 +16,7 @@
 		007 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107 /* MenuBarView.swift */; };
 		008 /* AccountRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108 /* AccountRowView.swift */; };
 		009 /* AddAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109 /* AddAccountView.swift */; };
+		010 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112 /* NotificationManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		109 /* AddAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddAccountView.swift; sourceTree = "<group>"; };
 		110 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		111 /* ClaudeAccountSwitcher.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeAccountSwitcher.entitlements; sourceTree = "<group>"; };
+		112 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,6 +90,7 @@
 				104 /* ConfigFileManager.swift */,
 				105 /* UsageParser.swift */,
 				106 /* AccountSwitcher.swift */,
+				112 /* NotificationManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -179,6 +182,7 @@
 				007 /* MenuBarView.swift in Sources */,
 				008 /* AccountRowView.swift in Sources */,
 				009 /* AddAccountView.swift in Sources */,
+				010 /* NotificationManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
