@@ -346,38 +346,40 @@ class AccountSwitcher: ObservableObject {
             activeAccount = newAccount
             saveAccounts()
 
-            // 4. Open terminal to run claude login
-            openTerminalForLogin()
-
-            // 5. Wait a bit then check for new credentials
+            // 4. Start login process
             isAddingAccount = true
-
-            // Start polling for new credentials
+            
+            // Run login in background
             Task {
-                await pollForNewCredentials(accountId: newAccount.id)
+                do {
+                    print("Starting Claude login...")
+                    try await LoginRunner.shared.startLogin { output in
+                        print("[Claude CLI]: \(output)")
+                    }
+                    print("Claude login process completed successfully")
+                    
+                    // 5. Check for new credentials immediately
+                    await pollForNewCredentials(accountId: newAccount.id)
+                } catch {
+                    print("Login failed: \(error)")
+                    await MainActor.run {
+                        self.errorMessage = "Login failed: \(error.localizedDescription)"
+                        // Cleanup if failed
+                        if let index = self.accounts.firstIndex(where: { $0.id == newAccount.id }) {
+                            self.accounts.remove(at: index)
+                        }
+                        self.isAddingAccount = false
+                        self.saveAccounts()
+                    }
+                }
             }
 
         } catch {
             errorMessage = error.localizedDescription
-        }
-
-        isLoading = false
-    }
-
-    private func openTerminalForLogin() {
-        let script = """
-        tell application "Terminal"
-            activate
-            do script "claude login && echo '\\n✅ Login complete! You can close this window.'"
-        end tell
-        """
-
-        if let appleScript = NSAppleScript(source: script) {
-            var error: NSDictionary?
-            appleScript.executeAndReturnError(&error)
+            isLoading = false
         }
     }
-
+    
     private func pollForNewCredentials(accountId: UUID) async {
         // Poll every 2 seconds for up to 5 minutes
         let maxAttempts = 150
