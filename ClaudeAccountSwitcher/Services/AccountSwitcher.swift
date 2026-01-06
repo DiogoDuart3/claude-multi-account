@@ -349,8 +349,15 @@ class AccountSwitcher: ObservableObject {
             // 4. Start login process
             isAddingAccount = true
             
-            // Run login in background
+            // Perform login and polling concurrently
             Task {
+                // Start polling task first to capture initial file state before login modifies it.
+                // This ensures we detect the file modification timestamp change correctly.
+                let pollingTask = Task { await pollForNewCredentials(accountId: newAccount.id) }
+                
+                // Small delay to ensure polling captures the "before" timestamp
+                try? await Task.sleep(nanoseconds: 200_000_000) // 0.2s
+
                 do {
                     print("Starting Claude login...")
                     try await LoginRunner.shared.startLogin { output in
@@ -358,9 +365,12 @@ class AccountSwitcher: ObservableObject {
                     }
                     print("Claude login process completed successfully")
                     
-                    // 5. Check for new credentials immediately
-                    await pollForNewCredentials(accountId: newAccount.id)
+                    // Wait for polling to detect the change and complete setup
+                    _ = await pollingTask.result
                 } catch {
+                    // Stop polling if login failed
+                    pollingTask.cancel()
+                    
                     print("Login failed: \(error)")
                     await MainActor.run {
                         self.errorMessage = "Login failed: \(error.localizedDescription)"
