@@ -24,6 +24,19 @@ A native macOS menu bar application designed to help power users manage multiple
 4.  Build and Run (Cmd+R).
 5.  Move the built application to your `/Applications` folder if desired.
 
+## Building for Release (GitHub)
+
+To create a shareable `.app` for GitHub Releases:
+
+1.  Open the project in Xcode.
+2.  Select **Product** > **Archive** from the menu bar.
+3.  Once the archive finishes, the **Organizer** window will appear.
+4.  Select the latest archive and click **Distribute App**.
+5.  Choose **Custom** > **Copy App**.
+6.  Save the `ClaudeAccountSwitcher.app` to your Desktop.
+7.  Right-click the app and choose **Compress** to create a `.zip` file.
+8.  Upload this zip file to your GitHub Release.
+
 ## Usage
 
 1.  **Adding an Account**:
