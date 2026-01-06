@@ -620,39 +620,41 @@ enum IconRenderer {
         }
     }
 
-    /// Creates a menu bar icon showing session and weekly usage (Claude style)
+    /// Creates a menu bar icon showing session and weekly usage
     static func makeIcon(
         sessionRemaining: Double?,
         weeklyRemaining: Double?,
         stale: Bool = false
     ) -> NSImage {
         renderImage {
-            // Keep monochrome template icons; Claude uses subtle shape cues only.
             let baseFill = NSColor.labelColor
-            let trackFillAlpha: CGFloat = stale ? 0.18 : 0.28
-            let trackStrokeAlpha: CGFloat = stale ? 0.28 : 0.44
+            // Reduced opacity to ensure empty bars don't look "filled"
+            let trackFillAlpha: CGFloat = stale ? 0.12 : 0.15 
+            let trackStrokeAlpha: CGFloat = stale ? 0.20 : 0.30
             let fillColor = baseFill.withAlphaComponent(stale ? 0.55 : 1.0)
 
-            let barWidthPx = 30 // 15 pt at 2×, uses the slot better without touching edges.
-            let barXPx = (canvasPx - barWidthPx) / 2 // = 3
+            let barWidthPx = 30 // 15 pt at 2×
+            let barXPx = (canvasPx - barWidthPx) / 2
 
             func drawBar(
                 rectPx: RectPx,
                 remaining: Double?,
                 alpha: CGFloat = 1.0,
-                addNotches: Bool = false
+                // Change default to false to use cleaner capsule style
+                addNotches: Bool = false 
             ) {
                 let rect = rectPx.rect()
-                // Claude reads better as a blockier critter; uses sharp corners.
+                // Use rounded corners (capsule) for cleaner look
                 let cornerRadiusPx = addNotches ? 0 : rectPx.h / 2
                 let radius = grid.pt(cornerRadiusPx)
 
+                // Track background
                 let trackPath = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
                 baseFill.withAlphaComponent(trackFillAlpha * alpha).setFill()
                 trackPath.fill()
 
-                // Crisp outline: stroke an inset path so the stroke stays within pixel bounds.
-                let strokeWidthPx = 2 // 1 pt == 2 px at 2×
+                // Stroke outline - simpler stroke for better scaling
+                let strokeWidthPx = 2
                 let insetPx = strokeWidthPx / 2
                 let strokeRect = grid.rect(
                     x: rectPx.x + insetPx,
@@ -669,8 +671,10 @@ enum IconRenderer {
 
                 // Fill: clip to the capsule and paint a left-to-right rect so the progress edge is straight.
                 if let remaining {
-                    let clamped = max(0, min(remaining / 100, 1))
+                    // remaining is 0..100
+                    let clamped = max(0, min(remaining / 100.0, 1.0))
                     let fillWidthPx = max(0, min(rectPx.w, Int((CGFloat(rectPx.w) * CGFloat(clamped)).rounded())))
+                    
                     if fillWidthPx > 0 {
                         NSGraphicsContext.current?.cgContext.saveGState()
                         trackPath.addClip()
@@ -684,66 +688,8 @@ enum IconRenderer {
                         NSGraphicsContext.current?.cgContext.restoreGState()
                     }
                 }
-
-                // Claude twist: blocky crab-style critter (arms + legs + vertical eyes).
-                if addNotches {
-                    let ctx = NSGraphicsContext.current?.cgContext
-
-                    fillColor.withAlphaComponent(alpha).setFill()
-
-                    // Arms/claws: mid-height side protrusions.
-                    // Keep within the 18×18pt canvas: barX is 3px, so 3px arms reach the edge without clipping.
-                    let armWidthPx = 3
-                    let armHeightPx = max(0, rectPx.h - 6)
-                    let armYPx = rectPx.y + 3
-                    let leftArm = grid.rect(
-                        x: rectPx.x - armWidthPx,
-                        y: armYPx,
-                        w: armWidthPx,
-                        h: armHeightPx)
-                    let rightArm = grid.rect(
-                        x: rectPx.x + rectPx.w,
-                        y: armYPx,
-                        w: armWidthPx,
-                        h: armHeightPx)
-                    NSBezierPath(rect: leftArm).fill()
-                    NSBezierPath(rect: rightArm).fill()
-
-                    // Legs: 4 little pixels underneath, like a tiny crab.
-                    let legCount = 4
-                    let legWidthPx = 2
-                    let legHeightPx = 3
-                    let legYPx = rectPx.y - legHeightPx
-                    let stepPx = max(1, rectPx.w / (legCount + 1))
-                    for idx in 0..<legCount {
-                        let cx = rectPx.x + stepPx * (idx + 1)
-                        let leg = grid.rect(
-                            x: cx - legWidthPx / 2,
-                            y: legYPx,
-                            w: legWidthPx,
-                            h: legHeightPx)
-                        NSBezierPath(rect: leg).fill()
-                    }
-
-                    // Eyes: tall vertical cutouts near the top.
-                    let eyeWidthPx = 2
-                    let eyeHeightPx = 5
-                    let eyeOffsetPx = 6
-                    let eyeYPx = rectPx.y + rectPx.h - eyeHeightPx - 2
-                    ctx?.saveGState()
-                    ctx?.setShouldAntialias(false)
-                    ctx?.clear(grid.rect(
-                        x: rectPx.midXPx - eyeOffsetPx - eyeWidthPx / 2,
-                        y: eyeYPx,
-                        w: eyeWidthPx,
-                        h: eyeHeightPx))
-                    ctx?.clear(grid.rect(
-                        x: rectPx.midXPx + eyeOffsetPx - eyeWidthPx / 2,
-                        y: eyeYPx,
-                        w: eyeWidthPx,
-                        h: eyeHeightPx))
-                    ctx?.restoreGState()
-                }
+                
+                // Note: "Notches" (critter style) removed from usage to provide cleaner look
             }
 
             let topValue = sessionRemaining
@@ -752,22 +698,23 @@ enum IconRenderer {
             let hasWeekly = (weeklyRemaining != nil)
             let weeklyAvailable = hasWeekly && (weeklyRemaining ?? 0) > 0
             
-            // Top bar (session) - larger, with Claude style
+            // Top bar (session)
             let topRectPx = RectPx(x: barXPx, y: 19, w: barWidthPx, h: 12)
-            // Bottom bar (weekly) - smaller, rounded
+            // Bottom bar (weekly)
             let bottomRectPx = RectPx(x: barXPx, y: 5, w: barWidthPx, h: 8)
 
             if weeklyAvailable {
                 // Normal: top=session, bottom=weekly
-                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: true)
+                // Changed addNotches to false for cleaner capsule look
+                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: false)
                 drawBar(rectPx: bottomRectPx, remaining: bottomValue)
             } else if !hasWeekly {
-                // Weekly missing (e.g. enterprise): keep normal layout but dim the bottom track
-                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: true)
+                // Weekly missing: dim bottom
+                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: false)
                 drawBar(rectPx: bottomRectPx, remaining: nil, alpha: 0.45)
             } else {
-                // Weekly exhausted/zero
-                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: true)
+                // Weekly exhausted
+                drawBar(rectPx: topRectPx, remaining: topValue, addNotches: false)
                 drawBar(rectPx: bottomRectPx, remaining: bottomValue)
             }
         }
