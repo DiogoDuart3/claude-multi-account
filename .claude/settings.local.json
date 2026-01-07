@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(security find-generic-password -s \"claude\")",
+      "Bash(security find-generic-password:*)",
+      "Bash(security dump-keychain)",
+      "WebSearch",
+      "WebFetch(domain:docs.claude.com)",
+      "Bash(xcodebuild:*)"
+    ]
+  }
+}

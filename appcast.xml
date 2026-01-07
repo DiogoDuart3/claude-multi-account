@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>Claude Multi-Account Changelog</title>
+        <link>https://github.com/DiogoDuart3/claude-multi-account/releases</link>
+        <description>Most recent updates to Claude Multi-Account Switcher</description>
+        <language>en</language>
+        
+        <!-- 
+        ============================================
+        HOW TO ADD A NEW RELEASE:
+        ============================================
+        
+        1. Build your app in Xcode (Product > Archive > Distribute > Copy App)
+        2. Compress the .app into a .zip file
+        3. Generate the signature using Sparkle's sign_update tool:
+           ./bin/sign_update YourApp.zip
+        4. Upload the .zip to GitHub Releases
+        5. Copy the new <item> block below and fill in:
+           - sparkle:version (build number, e.g., "2")  
+           - sparkle:shortVersionString (display version, e.g., "1.1")
+           - title and pubDate
+           - description (release notes in HTML/CDATA)
+           - url (GitHub release download URL)
+           - sparkle:edSignature (from sign_update output)
+           - length (file size in bytes)
+        
+        ============================================
+        -->
+
+        <item>
+            <title>Version 1.1.6</title>
+            <pubDate>Wed, 07 Jan 2026 14:35:18 +0000</pubDate>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>1.1.6</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version 1.1.6</h2>
+                <ul>
+                    <li>Bug fixes and improvements</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.6/ClaudeAccountSwitcher.zip"
+                sparkle:version="6"
+                sparkle:shortVersionString="1.1.6"
+                sparkle:edSignature="/vm5+VsNEt5R9WWGOPUe0RMmRZ7fu4GNvCfK/n1tWAO4nO9h6FnEhzvye3z94G8qxm9H2XRCvu2bKg+miYU+Ag=="
+                length="4531580"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+
+
+        <item>
+            <title>Version 1.1.5</title>
+            <pubDate>Wed, 07 Jan 2026 14:05:58 +0000</pubDate>
+            <sparkle:version>5</sparkle:version>
+            <sparkle:shortVersionString>1.1.5</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version 1.1.5</h2>
+                <ul>
+                    <li>Bug fixes and improvements</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.5/ClaudeAccountSwitcher.zip"
+                sparkle:version="5"
+                sparkle:shortVersionString="1.1.5"
+                sparkle:edSignature="58YdJkz/wC67egrdKiZbN6ba1N3chhyocWG43PJQsZlcX1xpusXW6ySBdeWFGyIu5Ty/l5xddRHcfkVBEAjvCQ=="
+                length="4531566"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+
+
+        <item>
+            <title>Version 1.1.4</title>
+            <pubDate>Wed, 07 Jan 2026 13:06:39 +0000</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.1.4</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version 1.1.4</h2>
+                <ul>
+                    <li>Bug fixes and improvements</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.4/ClaudeAccountSwitcher.zip"
+                sparkle:version="4"
+                sparkle:shortVersionString="1.1.4"
+                sparkle:edSignature="Hv2csXVb5H8SllWZuxyrUnId6zqvqp8d9Xe8fV6N3hf/u8B/aFcx9Z87kcOfNSLtw+m1XEuQu6xZvN3Fry8TCw=="
+                length="4531554"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+
+        
+        <item>
+            <title>Version 1.1.3</title>
+            <pubDate>Tue, 07 Jan 2026 11:42:00 +0000</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>1.1.3</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version 1.1.3</h2>
+                <ul>
+                    <li><strong>Auto-Updates:</strong> The app now automatically checks for updates using Sparkle framework</li>
+                    <li><strong>Check for Updates:</strong> New menu item to manually check for updates</li>
+                    <li><strong>Secure Updates:</strong> All updates are cryptographically signed with EdDSA for security</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.3/ClaudeAccountSwitcher.zip"
+                sparkle:version="3"
+                sparkle:shortVersionString="1.1.3"
+                sparkle:edSignature="zz7Ze0Xod3wpU4MzBpTWts8wtscCxSMcHIKBRdtenxuKNs1Segskqm7AQuLWEpO8f2GoGGhSqnkWgIrD1EpuBA=="
+                length="4531567"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+        
+        <item>
+            <title>Version 1.1.0</title>
+            <pubDate>Tue, 07 Jan 2026 11:26:00 +0000</pubDate>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>What is New in 1.1.0</h2>
+                <ul>
+                    <li><strong>Auto-Updates:</strong> The app now automatically checks for updates using Sparkle framework</li>
+                    <li><strong>Check for Updates:</strong> New menu item to manually check for updates</li>
+                    <li><strong>Secure Updates:</strong> All updates are cryptographically signed with EdDSA for security</li>
+                    <li><strong>Release Scripts:</strong> Added developer tooling for easier releases</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.0/ClaudeAccountSwitcher.zip"
+                sparkle:version="2"
+                sparkle:shortVersionString="1.1.0"
+                sparkle:edSignature="pKtA7q5GzpAWARdIYbi0RUq00Vv4dyrsjHbPeTvXYxtuD5i5OwvbYHGKgyXAkF49PPGvEHZwuX2DKTqaAA/ADg=="
+                length="1865846"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+        
+        <item>
+            <title>Version 1.0</title>
+            <pubDate>Mon, 06 Jan 2025 12:00:00 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Initial Release</h2>
+                <ul>
+                    <li>Multi-account support with seamless switching</li>
+                    <li>Real-time session and weekly usage tracking</li>
+                    <li>Smart menu bar icon showing usage levels</li>
+                    <li>Native macOS experience with SwiftUI</li>
+                    <li>Secure credential storage in Keychain</li>
+                    <li>Automatic notifications for limit resets</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.0/ClaudeAccountSwitcher.zip"
+                sparkle:version="1"
+                sparkle:shortVersionString="1.0"
+                sparkle:edSignature="PLACEHOLDER_SIGNATURE"
+                length="0"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+        
+        <!-- Add new releases above this line -->
+        
+    </channel>
+</rss>
