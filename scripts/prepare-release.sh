@@ -5,9 +5,9 @@
 # =============================================================================
 # This script prepares a release by:
 # 1. Finding the latest build in the build/ directory
-# 2. Asking for release type (major/minor/patch)
-# 3. Auto-calculating the next version
-# 4. Creating a zip, signing it, and generating appcast.xml entry
+# 2. Reading version from the built app
+# 3. Creating a signed zip
+# 4. Automatically updating appcast.xml
 # =============================================================================
 
 set -e
@@ -47,7 +47,6 @@ if [ ! -d "$BUILD_DIR" ]; then
 fi
 
 # Get the most recent build folder (sorted by name which includes timestamp)
-# Use -d flag to only get directories, excluding any .zip files
 LATEST_BUILD_FOLDER=$(find "$BUILD_DIR" -maxdepth 1 -type d -name "ClaudeAccountSwitcher*" 2>/dev/null | sort -r | head -1)
 
 if [ -z "$LATEST_BUILD_FOLDER" ]; then
@@ -65,96 +64,46 @@ fi
 
 echo -e "${GREEN}✓${NC} Found build: ${CYAN}$(basename "$LATEST_BUILD_FOLDER")${NC}"
 
-# Get current version from the built app's Info.plist
-CURRENT_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "1.0")
-CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "1")
+# Get version from the BUILT app (not the source Info.plist)
+VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PATH/Contents/Info.plist" 2>/dev/null)
+BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PATH/Contents/Info.plist" 2>/dev/null)
 
-echo -e "${GREEN}✓${NC} Current version in build: ${YELLOW}$CURRENT_VERSION${NC} (build ${YELLOW}$CURRENT_BUILD${NC})"
+if [ -z "$VERSION" ] || [ -z "$BUILD" ]; then
+    echo -e "${RED}Error: Could not read version from built app${NC}"
+    exit 1
+fi
 
-# Get the latest version from appcast.xml (if it exists)
-if [ -f "$APPCAST_FILE" ]; then
-    APPCAST_VERSION=$(grep -o 'sparkle:shortVersionString>[^<]*' "$APPCAST_FILE" | head -1 | sed 's/sparkle:shortVersionString>//')
-    if [ -n "$APPCAST_VERSION" ]; then
-        echo -e "${GREEN}✓${NC} Latest published version: ${YELLOW}$APPCAST_VERSION${NC}"
+echo -e "${GREEN}✓${NC} Version in build: ${YELLOW}$VERSION${NC} (build ${YELLOW}$BUILD${NC})"
+
+# Check if this version already exists in appcast
+if grep -q "sparkle:shortVersionString>$VERSION<" "$APPCAST_FILE" 2>/dev/null; then
+    echo -e "${YELLOW}⚠${NC}  Version $VERSION already exists in appcast.xml"
+    read -p "Continue and overwrite? [y/N]: " OVERWRITE
+    if [[ ! "$OVERWRITE" =~ ^[Yy] ]]; then
+        echo "Aborted."
+        exit 0
     fi
-fi
-
-echo ""
-
-# Parse current version into components
-IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-MAJOR=${MAJOR:-1}
-MINOR=${MINOR:-0}
-PATCH=${PATCH:-0}
-
-# Ask for release type
-echo -e "${CYAN}What type of release is this?${NC}"
-echo ""
-echo -e "  ${YELLOW}1)${NC} Major  ($(($MAJOR + 1)).0.0) - Breaking changes, major new features"
-echo -e "  ${YELLOW}2)${NC} Minor  ($MAJOR.$(($MINOR + 1)).0) - New features, backwards compatible"
-echo -e "  ${YELLOW}3)${NC} Patch  ($MAJOR.$MINOR.$(($PATCH + 1))) - Bug fixes, small improvements"
-echo -e "  ${YELLOW}4)${NC} Same   ($CURRENT_VERSION) - Re-release current version"
-echo -e "  ${YELLOW}5)${NC} Custom - Enter version manually"
-echo ""
-read -p "Enter choice [1-5]: " RELEASE_TYPE
-
-case $RELEASE_TYPE in
-    1)
-        NEW_VERSION="$(($MAJOR + 1)).0.0"
-        ;;
-    2)
-        NEW_VERSION="$MAJOR.$(($MINOR + 1)).0"
-        ;;
-    3)
-        NEW_VERSION="$MAJOR.$MINOR.$(($PATCH + 1))"
-        ;;
-    4)
-        NEW_VERSION="$CURRENT_VERSION"
-        ;;
-    5)
-        read -p "Enter version (e.g., 2.1.0): " NEW_VERSION
-        ;;
-    *)
-        echo -e "${RED}Invalid choice${NC}"
-        exit 1
-        ;;
-esac
-
-# Calculate build number (increment from current)
-NEW_BUILD=$((CURRENT_BUILD + 1))
-if [ "$RELEASE_TYPE" = "4" ]; then
-    NEW_BUILD=$CURRENT_BUILD
-fi
-
-echo ""
-echo -e "${GREEN}✓${NC} New version: ${YELLOW}$NEW_VERSION${NC} (build ${YELLOW}$NEW_BUILD${NC})"
-
-# Confirm
-echo ""
-read -p "Proceed with this version? [Y/n]: " CONFIRM
-if [[ "$CONFIRM" =~ ^[Nn] ]]; then
-    echo "Aborted."
-    exit 0
 fi
 
 echo ""
 echo -e "${BLUE}Creating release package...${NC}"
 
 # Create zip file
-ZIP_NAME="ClaudeAccountSwitcher-v$NEW_VERSION.zip"
+ZIP_NAME="ClaudeAccountSwitcher-v$VERSION.zip"
 ZIP_PATH="$BUILD_DIR/$ZIP_NAME"
 
 # Remove old zip if exists
 rm -f "$ZIP_PATH"
 
 # Create the zip
-(cd "$LATEST_BUILD_FOLDER" && zip -r "$ZIP_PATH" ClaudeAccountSwitcher.app -x "*.DS_Store")
+(cd "$LATEST_BUILD_FOLDER" && zip -rq "$ZIP_PATH" ClaudeAccountSwitcher.app -x "*.DS_Store")
 
 echo -e "${GREEN}✓${NC} Created: ${CYAN}$ZIP_NAME${NC}"
 
 # Get file size
 FILE_SIZE=$(stat -f%z "$ZIP_PATH")
-echo -e "${GREEN}✓${NC} File size: ${YELLOW}$FILE_SIZE bytes${NC}"
+FILE_SIZE_MB=$(echo "scale=2; $FILE_SIZE / 1048576" | bc)
+echo -e "${GREEN}✓${NC} File size: ${YELLOW}$FILE_SIZE bytes${NC} ($FILE_SIZE_MB MB)"
 
 # Sign the update
 echo -e "${GREEN}✓${NC} Signing update..."
@@ -176,76 +125,86 @@ PUB_DATE=$(date -R)
 
 # GitHub repo info
 GITHUB_REPO="DiogoDuart3/claude-multi-account"
-DOWNLOAD_URL="https://github.com/$GITHUB_REPO/releases/download/v$NEW_VERSION/ClaudeAccountSwitcher.zip"
+DOWNLOAD_URL="https://github.com/$GITHUB_REPO/releases/download/v$VERSION/ClaudeAccountSwitcher.zip"
+
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}  Updating appcast.xml${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+# Create a temp file for the new item
+TEMP_ITEM=$(mktemp)
+cat > "$TEMP_ITEM" << ITEMEOF
+        <item>
+            <title>Version $VERSION</title>
+            <pubDate>$PUB_DATE</pubDate>
+            <sparkle:version>$BUILD</sparkle:version>
+            <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version $VERSION</h2>
+                <ul>
+                    <li>Bug fixes and improvements</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="$DOWNLOAD_URL"
+                sparkle:version="$BUILD"
+                sparkle:shortVersionString="$VERSION"
+                sparkle:edSignature="$SIGNATURE"
+                length="$FILE_SIZE"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+
+ITEMEOF
+
+# Find the line number where we need to insert (after the --> comment)
+INSERT_LINE=$(grep -n "^        -->" "$APPCAST_FILE" | head -1 | cut -d: -f1)
+
+if [ -z "$INSERT_LINE" ]; then
+    echo -e "${RED}Error: Could not find insertion point in appcast.xml${NC}"
+    rm -f "$TEMP_ITEM"
+    exit 1
+fi
+
+# Insert after that line
+TEMP_FILE=$(mktemp)
+head -n "$INSERT_LINE" "$APPCAST_FILE" > "$TEMP_FILE"
+echo "" >> "$TEMP_FILE"
+cat "$TEMP_ITEM" >> "$TEMP_FILE"
+tail -n "+$((INSERT_LINE + 1))" "$APPCAST_FILE" >> "$TEMP_FILE"
+
+# Replace the original file
+mv "$TEMP_FILE" "$APPCAST_FILE"
+rm -f "$TEMP_ITEM"
+
+echo -e "${GREEN}✓${NC} Updated appcast.xml with version $VERSION"
 
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}  Release Summary${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "  Version:      ${YELLOW}$NEW_VERSION${NC}"
-echo -e "  Build:        ${YELLOW}$NEW_BUILD${NC}"
-echo -e "  File Size:    ${YELLOW}$FILE_SIZE bytes${NC} ($(echo "scale=2; $FILE_SIZE / 1048576" | bc) MB)"
+echo -e "  Version:      ${YELLOW}$VERSION${NC}"
+echo -e "  Build:        ${YELLOW}$BUILD${NC}"
+echo -e "  File Size:    ${YELLOW}$FILE_SIZE_MB MB${NC}"
 echo -e "  Zip Location: ${CYAN}$ZIP_PATH${NC}"
-echo -e "  Download URL: ${CYAN}$DOWNLOAD_URL${NC}"
 echo ""
 
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  Appcast Entry (copy this to appcast.xml)${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-
-APPCAST_ENTRY=$(cat << 'HEREDOC_END'
-        <item>
-            <title>Version VERSION_PLACEHOLDER</title>
-            <pubDate>DATE_PLACEHOLDER</pubDate>
-            <sparkle:version>BUILD_PLACEHOLDER</sparkle:version>
-            <sparkle:shortVersionString>VERSION_PLACEHOLDER</sparkle:shortVersionString>
-            <description><![CDATA[
-                <h2>What is New in VERSION_PLACEHOLDER</h2>
-                <ul>
-                    <li>TODO: Add your release notes here</li>
-                </ul>
-            ]]></description>
-            <enclosure 
-                url="URL_PLACEHOLDER"
-                sparkle:version="BUILD_PLACEHOLDER"
-                sparkle:shortVersionString="VERSION_PLACEHOLDER"
-                sparkle:edSignature="SIGNATURE_PLACEHOLDER"
-                length="SIZE_PLACEHOLDER"
-                type="application/octet-stream" />
-            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-        </item>
-HEREDOC_END
-)
-
-# Replace placeholders with actual values
-APPCAST_ENTRY="${APPCAST_ENTRY//VERSION_PLACEHOLDER/$NEW_VERSION}"
-APPCAST_ENTRY="${APPCAST_ENTRY//DATE_PLACEHOLDER/$PUB_DATE}"
-APPCAST_ENTRY="${APPCAST_ENTRY//BUILD_PLACEHOLDER/$NEW_BUILD}"
-APPCAST_ENTRY="${APPCAST_ENTRY//URL_PLACEHOLDER/$DOWNLOAD_URL}"
-APPCAST_ENTRY="${APPCAST_ENTRY//SIGNATURE_PLACEHOLDER/$SIGNATURE}"
-APPCAST_ENTRY="${APPCAST_ENTRY//SIZE_PLACEHOLDER/$FILE_SIZE}"
-
-echo "$APPCAST_ENTRY"
-
-echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}  Next Steps${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "  1. ${YELLOW}Update appcast.xml${NC}"
-echo -e "     Add the XML above as the first <item> inside <channel>"
-echo ""
-echo -e "  2. ${YELLOW}Create GitHub Release${NC}"
-echo -e "     Tag: ${CYAN}v$NEW_VERSION${NC}"
+echo -e "  ${YELLOW}1. Create GitHub Release${NC}"
+echo -e "     Go to: ${CYAN}https://github.com/$GITHUB_REPO/releases/new${NC}"
+echo -e "     Tag:   ${CYAN}v$VERSION${NC}"
 echo -e "     Upload: ${CYAN}$ZIP_PATH${NC}"
-echo -e "     (Rename to ClaudeAccountSwitcher.zip when uploading)"
+echo -e "     ${RED}Important: Rename to ClaudeAccountSwitcher.zip when uploading!${NC}"
 echo ""
-echo -e "  3. ${YELLOW}Update Info.plist${NC} (for next build)"
-echo -e "     CFBundleShortVersionString: $NEW_VERSION"
-echo -e "     CFBundleVersion: $NEW_BUILD"
+echo -e "  ${YELLOW}2. Commit and push appcast.xml${NC}"
+echo -e "     git add appcast.xml"
+echo -e "     git commit -m \"Release v$VERSION\""
+echo -e "     git push"
 echo ""
-echo -e "  4. ${YELLOW}Commit and push${NC} appcast.xml to main branch"
-echo ""
-echo -e "${GREEN}Done! The zip is ready at: $ZIP_PATH${NC}"
+echo -e "${GREEN}Done! The release is ready.${NC}"

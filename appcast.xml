@@ -27,6 +27,50 @@
         
         ============================================
         -->
+
+        <item>
+            <title>Version 1.1.4</title>
+            <pubDate>Wed, 07 Jan 2026 13:06:39 +0000</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.1.4</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version 1.1.4</h2>
+                <ul>
+                    <li>Bug fixes and improvements</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.4/ClaudeAccountSwitcher.zip"
+                sparkle:version="4"
+                sparkle:shortVersionString="1.1.4"
+                sparkle:edSignature="Hv2csXVb5H8SllWZuxyrUnId6zqvqp8d9Xe8fV6N3hf/u8B/aFcx9Z87kcOfNSLtw+m1XEuQu6xZvN3Fry8TCw=="
+                length="4531554"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+
+
+        <item>
+            <title>Version 1.1.4</title>
+            <pubDate>Wed, 07 Jan 2026 13:06:25 +0000</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.1.4</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version 1.1.4</h2>
+                <ul>
+                    <li>Bug fixes and improvements</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.4/ClaudeAccountSwitcher.zip"
+                sparkle:version="4"
+                sparkle:shortVersionString="1.1.4"
+                sparkle:edSignature="Hv2csXVb5H8SllWZuxyrUnId6zqvqp8d9Xe8fV6N3hf/u8B/aFcx9Z87kcOfNSLtw+m1XEuQu6xZvN3Fry8TCw=="
+                length="4531554"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+
         
         <item>
             <title>Version 1.1.3</title>
