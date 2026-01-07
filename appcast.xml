@@ -29,6 +29,30 @@
         -->
         
         <item>
+            <title>Version 1.1.0</title>
+            <pubDate>Tue, 07 Jan 2026 11:26:00 +0000</pubDate>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>What is New in 1.1.0</h2>
+                <ul>
+                    <li><strong>Auto-Updates:</strong> The app now automatically checks for updates using Sparkle framework</li>
+                    <li><strong>Check for Updates:</strong> New menu item to manually check for updates</li>
+                    <li><strong>Secure Updates:</strong> All updates are cryptographically signed with EdDSA for security</li>
+                    <li><strong>Release Scripts:</strong> Added developer tooling for easier releases</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.0/ClaudeAccountSwitcher.zip"
+                sparkle:version="2"
+                sparkle:shortVersionString="1.1.0"
+                sparkle:edSignature="pKtA7q5GzpAWARdIYbi0RUq00Vv4dyrsjHbPeTvXYxtuD5i5OwvbYHGKgyXAkF49PPGvEHZwuX2DKTqaAA/ADg=="
+                length="1865846"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+        
+        <item>
             <title>Version 1.0</title>
             <pubDate>Mon, 06 Jan 2025 12:00:00 +0000</pubDate>
             <sparkle:version>1</sparkle:version>
