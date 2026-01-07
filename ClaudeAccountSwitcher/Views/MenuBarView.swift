@@ -276,8 +276,18 @@ struct UsageProgressMetricView: View {
 
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
+    /// Returns true if the reset time has passed, meaning the limit should be reset to 100%
+    private var hasReset: Bool {
+        guard let reset = resetTime else { return false }
+        return reset <= Date()
+    }
+
     private var percentLeft: Double {
-        max(0, min(100, 100 - percentUsed))
+        // If reset time has passed, show 100% remaining
+        if hasReset {
+            return 100
+        }
+        return max(0, min(100, 100 - percentUsed))
     }
 
     private var progressColor: Color {
@@ -328,7 +338,7 @@ struct UsageProgressMetricView: View {
         let now = Date()
         let remaining = date.timeIntervalSince(now)
 
-        guard remaining > 0 else { return "Resets now" }
+        guard remaining > 0 else { return "Just reset" }
 
         let days = Int(remaining) / 86400
         let hours = (Int(remaining) % 86400) / 3600
@@ -417,17 +427,26 @@ struct AccountSwitchRow: View {
                     if let rateLimit = account.cachedRateLimit {
                         HStack(spacing: 8) {
                             if let sessionUsed = rateLimit.sessionUsed {
-                                let sessionLeft = max(0, 100 - sessionUsed)
+                                // Show 100% if the session reset time has passed
+                                let sessionHasReset = rateLimit.resetTime.map { $0 <= Date() } ?? false
+                                let sessionLeft = sessionHasReset ? 100 : max(0, 100 - sessionUsed)
                                 Text("Session: \(sessionLeft)%")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                             if let weeklyUsed = rateLimit.weeklyUsed {
-                                let weeklyLeft = max(0, 100 - weeklyUsed)
+                                // Show 100% if the weekly reset time has passed
+                                let weeklyHasReset = rateLimit.weeklyResetTime.map { $0 <= Date() } ?? false
+                                let weeklyLeft = weeklyHasReset ? 100 : max(0, 100 - weeklyUsed)
                                 Text("Weekly: \(weeklyLeft)%")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
+                        }
+                        if let resetTime = rateLimit.resetTime {
+                            Text(formatResetTime(resetTime))
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
                         }
                     }
                 }
@@ -481,6 +500,22 @@ struct AccountSwitchRow: View {
             switcher.removeAccount(account)
         }
     }
+    
+    private func formatResetTime(_ date: Date) -> String {
+        let now = Date()
+        let remaining = date.timeIntervalSince(now)
+        
+        guard remaining > 0 else { return "Just reset" }
+        
+        let hours = Int(remaining) / 3600
+        let minutes = (Int(remaining) % 3600) / 60
+        
+        if hours > 0 {
+            return "Resets in \(hours)h \(minutes)m"
+        } else {
+            return "Resets in \(minutes)m"
+        }
+    }
 }
 
 // MARK: - Actions Section
@@ -529,11 +564,18 @@ struct ActionsSectionView: View {
     }
 }
 
-// MARK: - Meta Section (Quit, etc.)
+// MARK: - Meta Section (Quit, Updates, etc.)
 
 struct MetaSectionView: View {
+    @ObservedObject private var updaterManager = UpdaterManager.shared
+    
     var body: some View {
         VStack(spacing: 0) {
+            MenuActionButton(icon: "arrow.down.circle", title: "Check for Updates...") {
+                updaterManager.checkForUpdates()
+            }
+            .disabled(!updaterManager.canCheckForUpdates)
+            
             MenuActionButton(icon: "power", title: "Quit", shortcut: "Q") {
                 NSApp.terminate(nil)
             }

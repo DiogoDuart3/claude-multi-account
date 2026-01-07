@@ -26,5 +26,14 @@
     <string>Copyright 2025. All rights reserved.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/DiogoDuart3/claude-multi-account/main/appcast.xml</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUAutomaticallyUpdate</key>
+    <true/>
+    <key>SUPublicEDKey</key>
+    <string>kg6yZj9/aFSYOV/3bznkKENVQDAhvpDSRP2vjI8gbrM=</string>
 </dict>
 </plist>
+
