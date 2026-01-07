@@ -20,6 +20,7 @@
 		011 /* LoginRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113 /* LoginRunner.swift */; };
 		B9E207A62F0E741F003B5A86 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9E207A52F0E741F003B5A86 /* Assets.xcassets */; };
 		B9E207A92F0E7709003B5A86 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = B9E207A82F0E7709003B5A86 /* Sparkle */; };
+		B9E207AB2F0E7B7D003B5A86 /* UpdaterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E207AA2F0E7B7D003B5A86 /* UpdaterManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		112 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		113 /* LoginRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginRunner.swift; sourceTree = "<group>"; };
 		B9E207A52F0E741F003B5A86 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B9E207AA2F0E7B7D003B5A86 /* UpdaterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +95,7 @@
 		304 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B9E207AA2F0E7B7D003B5A86 /* UpdaterManager.swift */,
 				103 /* KeychainManager.swift */,
 				104 /* ConfigFileManager.swift */,
 				105 /* UsageParser.swift */,
@@ -192,6 +195,7 @@
 				005 /* UsageParser.swift in Sources */,
 				006 /* AccountSwitcher.swift in Sources */,
 				007 /* MenuBarView.swift in Sources */,
+				B9E207AB2F0E7B7D003B5A86 /* UpdaterManager.swift in Sources */,
 				008 /* AccountRowView.swift in Sources */,
 				009 /* AddAccountView.swift in Sources */,
 				010 /* NotificationManager.swift in Sources */,
@@ -339,7 +343,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.claudeswitcher.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -368,7 +372,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.claudeswitcher.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
