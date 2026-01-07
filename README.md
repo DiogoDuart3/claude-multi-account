@@ -41,7 +41,7 @@ To create a shareable `.app` for GitHub Releases:
 
 This app uses [Sparkle](https://sparkle-project.org/) for automatic updates. Users will be notified when a new version is available.
 
-![Auto-Update Demo](auto-update-showcase.gif)
+![Auto-Update Demo](showcase.gif)
 
 ### Setting Up Sparkle (First Time Only)
 
