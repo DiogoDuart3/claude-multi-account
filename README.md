@@ -1,4 +1,4 @@
-# Claude Multi-Account Switcher
+# Claude Account Switcher
 
 A native macOS menu bar application designed to help power users manage multiple Claude (Anthropic) accounts and monitor usage limits in real-time.
 
@@ -19,7 +19,7 @@ A native macOS menu bar application designed to help power users manage multiple
 ## Installation
 
 1.  Clone this repository.
-2.  Open `ClaudeAccountSwitcher.xcodeproj` in Xcode.
+2.  Open `Claude Account Switcher.xcodeproj` in Xcode.
 3.  Ensure you have a valid signing team selected in the project settings.
 4.  Build and Run (Cmd+R).
 5.  Move the built application to your `/Applications` folder if desired.
@@ -33,7 +33,7 @@ To create a shareable `.app` for GitHub Releases:
 3.  Once the archive finishes, the **Organizer** window will appear.
 4.  Select the latest archive and click **Distribute App**.
 5.  Choose **Custom** > **Copy App**.
-6.  Save the `ClaudeAccountSwitcher.app` to your Desktop.
+6.  Save the `Claude Account Switcher.app` to your Desktop.
 7.  Right-click the app and choose **Compress** to create a `.zip` file.
 8.  Upload this zip file to your GitHub Release.
 
@@ -48,8 +48,8 @@ This app uses [Sparkle](https://sparkle-project.org/) for automatic updates. Use
 1.  **Generate signing keys** (required for secure updates):
     ```bash
     # After adding Sparkle package in Xcode, find the generate_keys tool:
-    # Usually at: ~/Library/Developer/Xcode/DerivedData/ClaudeAccountSwitcher-*/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys
-    
+    find ~/Library/Developer/Xcode/DerivedData -name generate_keys -path "*/artifacts/*" -type f
+
     # Run it to create your EdDSA key pair:
     ./generate_keys
     ```
@@ -68,18 +68,24 @@ This app uses [Sparkle](https://sparkle-project.org/) for automatic updates. Use
 
 2.  **Archive and export** the app (see "Building for Release" above).
 
-3.  **Sign the update**:
+3.  **Preferred**: run the release helper script:
+    ```bash
+    ./scripts/prepare-release.sh
+    ```
+    This creates the release ZIP, signs it, and updates `appcast.xml`.
+
+4.  **Sign the update manually** (only if not using the script):
     ```bash
     # Find sign_update in the same Sparkle bin directory
-    ./sign_update ClaudeAccountSwitcher.zip
+    ./sign_update Claude-Account-Switcher.zip
     ```
     This outputs an EdDSA signature.
 
-4.  **Create a GitHub Release**:
+5.  **Create a GitHub Release**:
     - Tag: `v1.1` (matching your version)
-    - Upload `ClaudeAccountSwitcher.zip`
+    - Upload `Claude-Account-Switcher.zip`
 
-5.  **Update `appcast.xml`**:
+6.  **Update `appcast.xml` manually** (only if not using the script):
     ```xml
     <item>
         <title>Version 1.1</title>
@@ -93,7 +99,7 @@ This app uses [Sparkle](https://sparkle-project.org/) for automatic updates. Use
             </ul>
         ]]></description>
         <enclosure 
-            url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1/ClaudeAccountSwitcher.zip"
+            url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1/Claude-Account-Switcher.zip"
             sparkle:version="2"
             sparkle:shortVersionString="1.1"
             sparkle:edSignature="YOUR_SIGNATURE_FROM_STEP_3"
@@ -103,7 +109,7 @@ This app uses [Sparkle](https://sparkle-project.org/) for automatic updates. Use
     </item>
     ```
 
-6.  **Commit and push** the updated `appcast.xml` to the `main` branch.
+7.  **Commit and push** the updated `appcast.xml` to the `main` branch.
 
 Users will automatically be notified of the update!
 
@@ -144,4 +150,3 @@ Users will automatically be notified of the update!
 ## License
 
 MIT License. See [LICENSE](LICENSE) file for details.
-

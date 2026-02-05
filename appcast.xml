@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
-        <title>Claude Multi-Account Changelog</title>
+        <title>Claude Account Switcher Changelog</title>
         <link>https://github.com/DiogoDuart3/claude-multi-account/releases</link>
-        <description>Most recent updates to Claude Multi-Account Switcher</description>
+        <description>Most recent updates to Claude Account Switcher</description>
         <language>en</language>
         
         <!-- 
@@ -27,6 +27,28 @@
         
         ============================================
         -->
+
+        <item>
+            <title>Version 1.1.9</title>
+            <pubDate>Thu, 05 Feb 2026 20:11:36 +0000</pubDate>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>1.1.9</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version 1.1.9</h2>
+                <ul>
+                    <li>Bug fixes and improvements</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.1.9/Claude-Account-Switcher.zip"
+                sparkle:version="9"
+                sparkle:shortVersionString="1.1.9"
+                sparkle:edSignature="mgsWEbaGWXLAw/5dZzI6/ILsgXvKnDVLOUbDk/hBBEqUzEQ0Sr6xbxwTVrk0tU8NXCs3VkegJsueALlVCM2IDQ=="
+                length="4464759"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+
 
         <item>
             <title>Version 1.1.8</title>

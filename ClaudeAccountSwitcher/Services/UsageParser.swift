@@ -130,7 +130,7 @@ class UsageParser {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
-        request.setValue("ClaudeAccountSwitcher", forHTTPHeaderField: "User-Agent")
+        request.setValue("ClaudeAccountSwitcher/1.0", forHTTPHeaderField: "User-Agent")
         
         let (data, response) = try await URLSession.shared.data(for: request)
         

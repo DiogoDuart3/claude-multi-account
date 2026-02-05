@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# Claude Multi-Account Switcher - Release Preparation Script
+# Claude Account Switcher - Release Preparation Script
 # =============================================================================
 # This script prepares a release by:
 # 1. Finding the latest build in the build/ directory
@@ -25,9 +25,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$PROJECT_ROOT/build"
 APPCAST_FILE="$PROJECT_ROOT/appcast.xml"
+GITHUB_REPO="DiogoDuart3/claude-multi-account"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  Claude Multi-Account Switcher - Release Preparation${NC}"
+echo -e "${BLUE}  Claude Account Switcher - Release Preparation${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -47,7 +48,11 @@ if [ ! -d "$BUILD_DIR" ]; then
 fi
 
 # Get the most recent build folder (sorted by name which includes timestamp)
-LATEST_BUILD_FOLDER=$(find "$BUILD_DIR" -maxdepth 1 -type d -name "ClaudeAccountSwitcher*" 2>/dev/null | sort -r | head -1)
+LATEST_BUILD_FOLDER=$(
+    find "$BUILD_DIR" -maxdepth 1 -type d \( -name "ClaudeAccountSwitcher*" -o -name "Claude Account Switcher*" \) 2>/dev/null \
+    | sort -r \
+    | head -1
+)
 
 if [ -z "$LATEST_BUILD_FOLDER" ]; then
     echo -e "${RED}Error: No builds found in $BUILD_DIR${NC}"
@@ -55,12 +60,24 @@ if [ -z "$LATEST_BUILD_FOLDER" ]; then
     exit 1
 fi
 
-APP_PATH="$LATEST_BUILD_FOLDER/ClaudeAccountSwitcher.app"
+# Resolve app bundle path (supports both legacy and renamed app bundle names)
+if [ -d "$LATEST_BUILD_FOLDER/Claude Account Switcher.app" ]; then
+    APP_PATH="$LATEST_BUILD_FOLDER/Claude Account Switcher.app"
+elif [ -d "$LATEST_BUILD_FOLDER/ClaudeAccountSwitcher.app" ]; then
+    APP_PATH="$LATEST_BUILD_FOLDER/ClaudeAccountSwitcher.app"
+else
+    APP_PATH=$(find "$LATEST_BUILD_FOLDER" -maxdepth 1 -type d -name "*.app" 2>/dev/null | head -1)
+fi
 
 if [ ! -d "$APP_PATH" ]; then
     echo -e "${RED}Error: App not found at $APP_PATH${NC}"
     exit 1
 fi
+
+APP_BUNDLE_NAME="$(basename "$APP_PATH")"
+APP_PRODUCT_NAME="${APP_BUNDLE_NAME%.app}"
+ASSET_NAME="$(echo "$APP_PRODUCT_NAME" | tr ' ' '-')"
+RELEASE_ASSET_FILE="$ASSET_NAME.zip"
 
 echo -e "${GREEN}✓${NC} Found build: ${CYAN}$(basename "$LATEST_BUILD_FOLDER")${NC}"
 
@@ -89,16 +106,22 @@ echo ""
 echo -e "${BLUE}Creating release package...${NC}"
 
 # Create zip file
-ZIP_NAME="ClaudeAccountSwitcher-v$VERSION.zip"
+ZIP_NAME="$ASSET_NAME-v$VERSION.zip"
 ZIP_PATH="$BUILD_DIR/$ZIP_NAME"
+RELEASE_ASSET_PATH="$BUILD_DIR/$RELEASE_ASSET_FILE"
 
 # Remove old zip if exists
 rm -f "$ZIP_PATH"
+rm -f "$RELEASE_ASSET_PATH"
 
 # Create the zip
-(cd "$LATEST_BUILD_FOLDER" && zip -rq "$ZIP_PATH" ClaudeAccountSwitcher.app -x "*.DS_Store")
+(cd "$LATEST_BUILD_FOLDER" && zip -rq "$ZIP_PATH" "$APP_BUNDLE_NAME" -x "*.DS_Store")
+
+# Create the release asset file matching appcast enclosure URL
+cp "$ZIP_PATH" "$RELEASE_ASSET_PATH"
 
 echo -e "${GREEN}✓${NC} Created: ${CYAN}$ZIP_NAME${NC}"
+echo -e "${GREEN}✓${NC} Release asset: ${CYAN}$RELEASE_ASSET_FILE${NC}"
 
 # Get file size
 FILE_SIZE=$(stat -f%z "$ZIP_PATH")
@@ -123,9 +146,8 @@ echo -e "${GREEN}✓${NC} Signature generated"
 # Generate current date in RFC 2822 format
 PUB_DATE=$(date -R)
 
-# GitHub repo info
-GITHUB_REPO="DiogoDuart3/claude-multi-account"
-DOWNLOAD_URL="https://github.com/$GITHUB_REPO/releases/download/v$VERSION/ClaudeAccountSwitcher.zip"
+# GitHub release artifact URL used by Sparkle enclosure
+DOWNLOAD_URL="https://github.com/$GITHUB_REPO/releases/download/v$VERSION/$RELEASE_ASSET_FILE"
 
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -190,6 +212,7 @@ echo -e "  Version:      ${YELLOW}$VERSION${NC}"
 echo -e "  Build:        ${YELLOW}$BUILD${NC}"
 echo -e "  File Size:    ${YELLOW}$FILE_SIZE_MB MB${NC}"
 echo -e "  Zip Location: ${CYAN}$ZIP_PATH${NC}"
+echo -e "  Release File: ${CYAN}$RELEASE_ASSET_PATH${NC}"
 echo ""
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -199,8 +222,7 @@ echo ""
 echo -e "  ${YELLOW}1. Create GitHub Release${NC}"
 echo -e "     Go to: ${CYAN}https://github.com/$GITHUB_REPO/releases/new${NC}"
 echo -e "     Tag:   ${CYAN}v$VERSION${NC}"
-echo -e "     Upload: ${CYAN}$ZIP_PATH${NC}"
-echo -e "     ${RED}Important: Rename to ClaudeAccountSwitcher.zip when uploading!${NC}"
+echo -e "     Upload: ${CYAN}$RELEASE_ASSET_PATH${NC}"
 echo ""
 echo -e "  ${YELLOW}2. Commit and push appcast.xml${NC}"
 echo -e "     git add appcast.xml"
