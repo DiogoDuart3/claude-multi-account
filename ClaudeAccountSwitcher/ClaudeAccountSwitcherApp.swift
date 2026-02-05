@@ -178,6 +178,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
         menu.addItem(addItem)
 
+        let manageItem = NSMenuItem(
+            title: "Manage Accounts...",
+            action: #selector(manageAccounts),
+            keyEquivalent: "")
+        manageItem.target = self
+        if let image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil) {
+            image.isTemplate = true
+            image.size = NSSize(width: 16, height: 16)
+            manageItem.image = image
+        }
+        menu.addItem(manageItem)
+
         let refreshItem = NSMenuItem(
             title: "Refresh",
             action: #selector(refresh),
@@ -365,6 +377,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func checkForUpdates() {
         UpdaterManager.shared.checkForUpdates()
+    }
+
+    @objc private func manageAccounts() {
+        ManageAccountsWindowController.shared.showWindow(switcher: switcher)
     }
 
     private func showAddAccountDialog() {

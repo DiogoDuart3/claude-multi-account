@@ -414,67 +414,70 @@ struct AccountSwitchRow: View {
     @State private var isHovered = false
 
     var body: some View {
-        Button {
-            Task { await switcher.switchTo(account: account) }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "person.circle")
-                    .imageScale(.medium)
-                    .frame(width: 18, alignment: .center)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(account.name)
-                        .font(.body)
-                    if let rateLimit = account.cachedRateLimit {
-                        HStack(spacing: 8) {
-                            if let sessionUsed = rateLimit.sessionUsed {
-                                // Show 100% if the session reset time has passed
-                                let sessionHasReset = rateLimit.resetTime.map { $0 <= Date() } ?? false
-                                let sessionLeft = sessionHasReset ? 100 : max(0, 100 - sessionUsed)
-                                Text("Session: \(sessionLeft)%")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+        HStack(spacing: 8) {
+            Button {
+                Task { await switcher.switchTo(account: account) }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.circle")
+                        .imageScale(.medium)
+                        .frame(width: 18, alignment: .center)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(account.name)
+                            .font(.body)
+                        if let rateLimit = account.cachedRateLimit {
+                            HStack(spacing: 8) {
+                                if let sessionUsed = rateLimit.sessionUsed {
+                                    // Show 100% if the session reset time has passed
+                                    let sessionHasReset = rateLimit.resetTime.map { $0 <= Date() } ?? false
+                                    let sessionLeft = sessionHasReset ? 100 : max(0, 100 - sessionUsed)
+                                    Text("Session: \(sessionLeft)%")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                if let weeklyUsed = rateLimit.weeklyUsed {
+                                    // Show 100% if the weekly reset time has passed
+                                    let weeklyHasReset = rateLimit.weeklyResetTime.map { $0 <= Date() } ?? false
+                                    let weeklyLeft = weeklyHasReset ? 100 : max(0, 100 - weeklyUsed)
+                                    Text("Weekly: \(weeklyLeft)%")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
-                            if let weeklyUsed = rateLimit.weeklyUsed {
-                                // Show 100% if the weekly reset time has passed
-                                let weeklyHasReset = rateLimit.weeklyResetTime.map { $0 <= Date() } ?? false
-                                let weeklyLeft = weeklyHasReset ? 100 : max(0, 100 - weeklyUsed)
-                                Text("Weekly: \(weeklyLeft)%")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            if let resetTime = rateLimit.resetTime {
+                                Text(formatResetTime(resetTime))
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
                             }
                         }
-                        if let resetTime = rateLimit.resetTime {
-                            Text(formatResetTime(resetTime))
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                        }
                     }
+                    Spacer()
                 }
-                Spacer()
-                
-                // Delete button on hover
-                if isHovered {
-                    Button {
-                        showDeleteConfirmation()
-                    } label: {
-                        Image(systemName: "trash")
-                            .imageScale(.small)
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Remove account")
-                }
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(isHovered ? MenuHighlightStyle.selectionBackground(true) : .clear)
-                    .padding(.horizontal, 6)
-            )
-            .foregroundStyle(MenuHighlightStyle.primary(isHovered))
+            .buttonStyle(.plain)
+            
+            if isHovered {
+                Button {
+                    showDeleteConfirmation()
+                } label: {
+                    Image(systemName: "trash")
+                        .imageScale(.small)
+                        .foregroundStyle(isHovered ? MenuHighlightStyle.secondary(true) : .secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Remove account")
+            }
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(isHovered ? MenuHighlightStyle.selectionBackground(true) : .clear)
+                .padding(.horizontal, 6)
+        )
+        .foregroundStyle(MenuHighlightStyle.primary(isHovered))
+        .contentShape(Rectangle())
         .onHover { hovering in
             withAnimation(.easeOut(duration: 0.1)) {
                 isHovered = hovering
@@ -527,6 +530,10 @@ struct ActionsSectionView: View {
         VStack(spacing: 0) {
             MenuActionButton(icon: "plus.circle", title: "Add Account...") {
                 showAddAccountDialog()
+            }
+            
+            MenuActionButton(icon: "gearshape", title: "Manage Accounts...") {
+                ManageAccountsWindowController.shared.showWindow(switcher: switcher)
             }
 
             MenuActionButton(icon: "arrow.clockwise", title: "Refresh") {

@@ -18,6 +18,7 @@
 		009 /* AddAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109 /* AddAccountView.swift */; };
 		010 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112 /* NotificationManager.swift */; };
 		011 /* LoginRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113 /* LoginRunner.swift */; };
+		012 /* ManageAccountsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114 /* ManageAccountsView.swift */; };
 		B9E207A62F0E741F003B5A86 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9E207A52F0E741F003B5A86 /* Assets.xcassets */; };
 		B9E207A92F0E7709003B5A86 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = B9E207A82F0E7709003B5A86 /* Sparkle */; };
 		B9E207AB2F0E7B7D003B5A86 /* UpdaterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E207AA2F0E7B7D003B5A86 /* UpdaterManager.swift */; };
@@ -38,6 +39,7 @@
 		111 /* ClaudeAccountSwitcher.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeAccountSwitcher.entitlements; sourceTree = "<group>"; };
 		112 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		113 /* LoginRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginRunner.swift; sourceTree = "<group>"; };
+		114 /* ManageAccountsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageAccountsView.swift; sourceTree = "<group>"; };
 		B9E207A52F0E741F003B5A86 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B9E207AA2F0E7B7D003B5A86 /* UpdaterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -112,6 +114,7 @@
 				107 /* MenuBarView.swift */,
 				108 /* AccountRowView.swift */,
 				109 /* AddAccountView.swift */,
+				114 /* ManageAccountsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -200,6 +203,7 @@
 				009 /* AddAccountView.swift in Sources */,
 				010 /* NotificationManager.swift in Sources */,
 				011 /* LoginRunner.swift in Sources */,
+				012 /* ManageAccountsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

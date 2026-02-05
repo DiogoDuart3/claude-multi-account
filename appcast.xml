@@ -29,6 +29,28 @@
         -->
 
         <item>
+            <title>Version 1.2.0</title>
+            <pubDate>Thu, 05 Feb 2026 22:12:00 +0000</pubDate>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+            <description><![CDATA[
+                <h2>Version 1.2.0</h2>
+                <ul>
+                    <li>Bug fixes and improvements</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/DiogoDuart3/claude-multi-account/releases/download/v1.2.0/Claude-Account-Switcher.zip"
+                sparkle:version="10"
+                sparkle:shortVersionString="1.2.0"
+                sparkle:edSignature="++XgqG6OXyHFrFKfwv9rlL9BlwzG/LO4uWTKwLxP3GMn1KhDJwqnkLxzDrnCT9xcVXdMby9uQe+cvo7aSQcXAg=="
+                length="4514359"
+                type="application/octet-stream" />
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+        </item>
+
+
+        <item>
             <title>Version 1.1.9</title>
             <pubDate>Thu, 05 Feb 2026 20:11:36 +0000</pubDate>
             <sparkle:version>9</sparkle:version>
